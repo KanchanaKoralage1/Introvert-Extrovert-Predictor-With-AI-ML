@@ -1456,3 +1456,18 @@ jupyter notebook
         "prediction": "Introvert"
         }
         ```
+
+## Deploy app on render
+
+- I deploy this app on render
+
+    ```bash
+
+     # Base URL
+    https://introvert-extrovert-predictor-with-ai-ml.onrender.com/
+
+
+     # use this link to check POST request
+    https://introvert-extrovert-predictor-with-ai-ml.onrender.com/docs
+    
+    ```
