@@ -726,3 +726,166 @@ jupyter notebook
 
         - **Key Advantage**:
         - It usually gives the highest accuracy, but it takes more time to train.
+
+    
+    - Baseline Model: Logistic Regression
+
+    - Without the baseline, you cannot say whether the advanced model actually improved performance. So Logistic Regression becomes our reference model.
+
+    - Import the Model
+
+        ```bash
+        from sklearn.linear_model import LogisticRegression
+        ```
+
+    - Create the Model
+
+        ```bash
+        lr_model = LogisticRegression(
+        random_state=42
+        )
+        ```
+
+    - Train the Model
+
+        ```bash
+        lr_model.fit(
+        X_train_scaled,
+        y_train
+        )
+        ```
+
+    - Make Predictions
+
+        ```bash
+        lr_predictions = lr_model.predict(
+        X_test_scaled
+        )
+
+        ```
+
+    - Check the first few predictions
+
+        ```bash
+        print(lr_predictions[:10])
+        ```
+
+    - Evaluate Performance - calculate **Accuracy**, **Precision**, **Recall**, **F1-score**, **Confusion Matrix**, **ROC-AUC**
+
+        ```bash
+        from sklearn.metrics import (
+        accuracy_score,
+        precision_score,
+        recall_score,
+        f1_score,
+        confusion_matrix,
+        classification_report,
+        roc_auc_score
+        )
+
+         # Accuracy
+
+        lr_accuracy = accuracy_score(
+            y_test,
+            lr_predictions
+        )
+
+        print(f"Accuracy : {lr_accuracy:.4f}")
+
+
+         # Precision
+
+        lr_precision = precision_score(
+            y_test,
+            lr_predictions
+        )
+
+        print(f"Precision : {lr_precision:.4f}")
+
+
+         # Recall
+        lr_recall = recall_score(
+            y_test,
+            lr_predictions
+        )
+
+        print(f"Recall : {lr_recall:.4f}")
+
+
+         # F1 Score
+
+        lr_f1 = f1_score(
+            y_test,
+            lr_predictions
+        )
+
+        print(f"F1 Score : {lr_f1:.4f}")
+
+
+         # ROC-AUC
+         # Instead of hard class labels, ROC-AUC evaluates how well the model separates the two classes across different decision thresholds.
+
+         # First obtain prediction probabilities.
+
+        lr_probabilities = lr_model.predict_proba(
+            X_test_scaled
+        )[:, 1]
+
+         # Then calculate ROC-AUC.
+
+        lr_auc = roc_auc_score(
+            y_test,
+            lr_probabilities
+        )
+
+        print(f"ROC-AUC : {lr_auc:.4f}")
+
+        ```
+
+    - Classification Report
+
+        ```bash
+
+        print(
+            classification_report(
+                y_test,
+                lr_predictions,
+                target_names=["Extrovert", "Introvert"]
+            )
+        )
+
+        ```
+    - Confusion Matrix
+
+        ```bash
+
+        cm = confusion_matrix(
+            y_test,
+            lr_predictions
+        )
+
+        print(cm)
+
+        ```
+    - Store the Results
+
+        ```bash
+        model_results = []
+
+        model_results.append({
+            "Model": "Logistic Regression",
+            "Accuracy": lr_accuracy,
+            "Precision": lr_precision,
+            "Recall": lr_recall,
+            "F1 Score": lr_f1,
+            "ROC-AUC": lr_auc
+        })
+        ```
+    - Save the model into model/ folder
+
+        ```bash
+        joblib.dump(lr_model, "../model/logistic_regression.pkl")
+        ```
+
+
+    
