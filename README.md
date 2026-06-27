@@ -1313,70 +1313,148 @@ jupyter notebook
 
 ```
 
-## Hyperparameter Tuning (XGBoost) 
+## Create the FastAPI Application
 
-- After comparing the baseline models, XGBoost achieved the highest predictive performance. Therefore, hyperparameter tuning is performed only on the XGBoost model to further optimize its performance while avoiding unnecessary computation on lower-performing models
+    - Go inside app/ and create 
 
-- Current workflow
+        ```bash
+        __init__.py  # This purpose is simply to make app a Python package
+        main.py      # API endpoints
+        predict.py   # Model loading & prediction
+        schemas.py   # Request validation
+        ```
+    
+    - Before our ML model sees it, FastAPI checks
 
-```bash
-Train Multiple Models
+        ```bash
+        Is every field present?
+
+        Are the data types correct?
+
+        Is the JSON valid?
+
+        ```
+    - This is the job of Pydantic
+
+    - app/predict.py
+
+    - This file will contain all ML logic. this is the "brain" of the application.
+
+    - This will
+
+        ```bash
+        Load Model
         ↓
-Compare Performance
+        Load Encoder
         ↓
-Choose Best Model
+        Convert Yes/No
         ↓
-Hyperparameter Tuning
+        Create DataFrame
         ↓
-Evaluate Again
+        Predict
         ↓
-Save Best Model
-```
+        Return Introvert/Extrovert
+        ```
 
-- Step 1 - Import RandomizedSearchCV
+    - Basic code of predict.py
 
-```bash
-from sklearn.model_selection import RandomizedSearchCV
-```
+        ```bash
+        import joblib
+        from pathlib import Path
 
-- Step 2 - Define Parameter Grid 
-- search reasonable parameter space.
 
-```bash
+        BASE_DIR = Path(__file__).resolve().parent.parent
 
-param_grid = {
-    "n_estimators": [50, 100, 150, 200],
-    "max_depth": [3, 4, 5, 6, 7],
-    "learning_rate": [0.01, 0.05, 0.1, 0.2],
-    "subsample": [0.8, 0.9, 1.0],
-    "colsample_bytree": [0.8, 0.9, 1.0]
-}
+        MODEL_PATH = BASE_DIR / "model" / "xgboost.pkl"
+        ENCODER_PATH = BASE_DIR / "model" / "target_encoder.pkl"
 
-```
+        model = joblib.load(MODEL_PATH)
+        target_encoder = joblib.load(ENCODER_PATH)
 
-- Step 3 -Create Randomized Search
+        ```
 
-```bash
+    - inside app/schemas.py
 
-random_search = RandomizedSearchCV(
-    estimator=XGBClassifier(
-        random_state=42,
-        eval_metric="logloss"
-    ),
-    param_distributions=param_grid,
-    n_iter=20,
-    scoring="accuracy",
-    cv=5,
-    verbose=1,
-    random_state=42,
-    n_jobs=-1
-)
+        ```bash
+        from pydantic import BaseModel
 
-```
 
-    - n_iter=20 → Tests 20 random combinations (much faster than Grid Search).
-    - cv=5 → Uses 5-fold cross-validation for reliable evaluation.
-    - scoring="accuracy" → Optimizes for classification accuracy.
-    - n_jobs=-1 → Uses all CPU cores.
+        class PersonalityRequest(BaseModel):
+            Time_spent_Alone: float
+            Stage_fear: str
+            Social_event_attendance: float
+            Going_outside: float
+            Drained_after_socializing: str
+            Friends_circle_size: float
+            Post_frequency: float
+            Social_Activity_Score: float
+            Isolation_Index: float
+        ```
+    - main.py
 
-- Step 4 - 
+        ```bash
+        from fastapi import FastAPI
+
+        from app.schemas import PersonalityRequest
+        from app.predict import predict_personality
+
+        app = FastAPI(
+            title="Introvert-Extrovert Prediction API",
+            description="Predict whether a person is an Introvert or Extrovert using a trained XGBoost model.",
+            version="1.0.0"
+        )
+
+
+        @app.get("/")
+        def home():
+            return {
+                "message": "Introvert-Extrovert Prediction API is running."
+            }
+
+
+        @app.post("/predict")
+        def predict(request: PersonalityRequest):
+
+            prediction = predict_personality(request)
+
+            return {
+                "prediction": prediction
+            }
+        ```
+
+    - Activate venv
+
+        ```bash
+        venv\Scripts\activate
+        ```
+    - Run the API
+
+        ```bash
+        uvicorn app.main:app --reload
+
+        # Uvicorn running on http://127.0.0.1:8000
+        # Open Swagger UI - http://127.0.0.1:8000/docs
+        ```
+
+    - Testing part - go to swagger UI POST/predicT
+
+        ```bash
+        {
+        "Time_spent_Alone": 7,
+        "Stage_fear": "Yes",
+        "Social_event_attendance": 2,
+        "Going_outside": 2,
+        "Drained_after_socializing": "Yes",
+        "Friends_circle_size": 3,
+        "Post_frequency": 1,
+        "Social_Activity_Score": 4,
+        "Isolation_Index": 8
+        }
+        ``` 
+    - Expected result should be either Introvert or Extrovert. It is based on model.
+
+        ```bash
+        {
+        "prediction": "Introvert"
+        }
+        ```
