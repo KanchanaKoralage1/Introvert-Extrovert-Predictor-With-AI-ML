@@ -1,6 +1,9 @@
 import joblib
 import pandas as pd
 from pathlib import Path
+from fastapi import APIRouter
+
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -10,6 +13,7 @@ ENCODER_PATH = BASE_DIR / "model" / "target_encoder.pkl"
 model = joblib.load(MODEL_PATH)
 target_encoder = joblib.load(ENCODER_PATH)
 
+router = APIRouter()
 
 def predict_personality(data):
     """
