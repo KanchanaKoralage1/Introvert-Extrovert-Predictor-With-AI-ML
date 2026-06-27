@@ -335,3 +335,200 @@ jupyter notebook
             - It measures the difference between time spent alone and social activity.
             - → Higher value = More isolated (likely Introvert)
 
+- Step 11 - Data Cleaning
+
+    - Create a Cleaning Copy - Don't modify the original dataset directly.
+
+        ```bash
+        clean_df = df.copy()
+        ```
+
+    - Handle Duplicate Records
+
+        ```bash
+        duplicates = clean_df.duplicated().sum()
+
+        print(f"Duplicate rows: {duplicates}")
+        ```
+    - If duplicates exists then remove duplicates
+
+        ```bash
+        clean_df = clean_df.drop_duplicates()
+
+        # then again check 
+        clean_df.duplicated().sum()
+        ```
+
+    - Handle Missing Values
+
+        ```bash
+        clean_df.isnull().sum()
+        ```
+
+    - Output
+
+        ```bash
+        Time_spent_Alone              61
+        Stage_fear                    73
+        Social_event_attendance       61
+        Going_outside                 65
+        Drained_after_socializing     51
+        Friends_circle_size           75
+        Post_frequency                63
+        Personality                    0
+        Social_Activity_Score        183
+        Isolation_Index              121
+        dtype: int64
+        ```
+
+    - Numerical Features - Fill missing values with the median
+
+        ```bash
+        from sklearn.impute import SimpleImputer
+        numeric_columns = clean_df.select_dtypes(include=['int64', 'float64']).columns
+
+        num_imputer = SimpleImputer(strategy="median")
+
+        clean_df[numeric_columns] = num_imputer.fit_transform(
+            clean_df[numeric_columns]
+        )
+        ```
+
+    - Categorical Features - Fill missing values with the most frequent value
+
+        ```bash
+        categorical_columns = clean_df.select_dtypes(
+            include=['object', 'string', 'category']
+        ).columns
+
+        cat_imputer = SimpleImputer(strategy="most_frequent")
+
+        clean_df[categorical_columns] = cat_imputer.fit_transform(
+            clean_df[categorical_columns]
+        )
+        ```
+
+    - Then Verify Missing Values
+
+        ```bash
+        clean_df.isnull().sum()
+
+        # expect 0 for all 
+        ```
+    - Verify Data Types
+
+        ```bash
+        clean_df.info()
+        ```
+
+    - Final Dataset Validation - Finally, verify that the cleaned dataset is ready for preprocessing.
+    
+        ```bash
+        print("Shape:", clean_df.shape)
+
+        print("Missing values:")
+        print(clean_df.isnull().sum())
+
+        print("Duplicate rows:", clean_df.duplicated().sum())
+        ```
+    - Output
+
+        ```bash
+        Shape: (2499, 10)
+        Missing values:
+        Time_spent_Alone             0
+        Stage_fear                   0
+        Social_event_attendance      0
+        Going_outside                0
+        Drained_after_socializing    0
+        Friends_circle_size          0
+        Post_frequency               0
+        Personality                  0
+        Social_Activity_Score        0
+        Isolation_Index              0
+        dtype: int64
+        Duplicate rows: 0
+        ```
+
+
+- Step 12 - Data Preprocessing
+
+- The goal of preprocessing is to transform the cleaned dataset into a format that machine learning algorithms can understand and use effectively.
+
+
+- Step 13 - Baseline Models
+
+    - Train multiple models. (ex :- Logistic Regression, Random Forest, Gradient Boosting)
+
+    - Why train multiple models?
+
+    - We train multiple models to compare their performance and choose the best one for the problem, rather than blindly assuming one model will work well.
+
+    - Main Reasons:
+
+        - 1. Different models have different strengths
+            - Some models are simple and easy to interpret (e.g., Logistic Regression).
+            - Some are powerful at capturing complex patterns (e.g., Random Forest, XGBoost).
+            - Some are more robust to noisy data.
+
+        - 2. No single model is best for every dataset
+            - Every dataset is different. What works well on one project may not work well on another.
+
+        - 3. To find the best performance
+            - By comparing models, we can select the one that gives the highest accuracy, AUC, or F1-score on our data.
+
+    - A common comparison might look like:
+
+    ```bash
+    | Model                                     | Type     | Why include it?                                  |
+    | ----------------------------------------- | -------- | ------------------------------------------------ |
+    | Logistic Regression                       | Baseline | Simple, fast, interpretable                      |
+    | Random Forest                             | Ensemble | Handles nonlinear relationships, robust to noise |
+    | Gradient Boosting (or XGBoost if allowed) | Boosting | Often achieves higher predictive performance     |
+
+    ```
+
+    - **1. Baseline Model**
+
+        - What it is: The simplest possible model.
+        - Purpose: Acts as a reference point or "minimum score".
+        - Example: Logistic Regression
+
+        - **Simple Analogy**:
+        - Imagine you are trying to guess whether a person is Introvert or Extrovert by just looking at one simple rule - for example, “If they spend more than 5 hours alone, they are Introvert, else Extrovert.”
+
+        - This the **Baseline**. It’s a very basic and simple approach.
+
+        - **Why we use it?**
+        - If your advanced models are not much better than the baseline, then something is wrong with your data or features.
+
+    - **2. Ensemble Model**
+
+        - What it is: A model that combines many small models to make one strong model.
+        - Main Idea: "Many heads are better than one."
+        - Popular Example: Random Forest
+
+        - **Simple Analogy**:
+        Instead of trusting just one person’s opinion about whether someone is Introvert or Extrovert, you ask 100 different people (each looking at different behaviors like time spent alone, social events, friends circle, etc.) and take the majority vote.
+        This is Random Forest — many small decision trees working together.
+
+        - **Key Advantage**:
+        - It reduces big mistakes and gives more stable and reliable predictions. It is less likely to get confused by noisy data (like someone who sometimes behaves like an introvert and sometimes like an extrovert).
+
+    - **3. Boosting**
+
+        - What it is: A special type of Ensemble where models are built one after another, learning from previous mistakes.
+        - Popular Examples: XGBoost, LightGBM, Gradient Boosting
+
+        - **Simple Analogy**:
+        - Think of a group of students trying to identify Introverts and Extroverts:
+        - The first student makes some wrong predictions.
+        - The second student focuses especially on the cases where the first student was wrong.
+        - The third student focuses on the remaining difficult cases.
+        - Each new student learns from the previous students’ mistakes.
+
+        - In the end, the whole group becomes very good at correctly identifying Introvert vs Extrovert.
+        This is how Boosting (XGBoost) works.
+
+        - **Key Advantage**:
+        - It usually gives the highest accuracy, but it takes more time to train.
