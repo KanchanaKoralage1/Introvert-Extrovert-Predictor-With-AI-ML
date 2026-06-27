@@ -887,5 +887,208 @@ jupyter notebook
         joblib.dump(lr_model, "../model/logistic_regression.pkl")
         ```
 
+- Step 14 - Random Forest model (Ensemble Model)
 
-    
+    - Import Random Forest
+
+        ```bash
+        from sklearn.ensemble import RandomForestClassifier
+        ```
+
+    - Create the Model
+
+        ```bash
+        rf_model = RandomForestClassifier(
+            n_estimators=100,
+            random_state=42
+        )
+        ```
+
+    - Train the Model
+
+        ```bash
+        rf_model.fit(
+            X_train,
+            y_train
+        )
+        ```
+
+    - Make Predictions
+
+        ```bash
+        rf_predictions = rf_model.predict(
+            X_test
+        )
+        ```
+
+    - Prediction probabilities
+
+        ```bash
+
+        rf_probabilities = rf_model.predict_proba(
+            X_test
+        )[:,1]
+
+        ```
+
+    - Evaluate Performance
+
+        ```bash
+        from sklearn.metrics import (
+            accuracy_score,
+            precision_score,
+            recall_score,
+            f1_score,
+            confusion_matrix,
+            classification_report,
+            roc_auc_score
+        )
+
+         # Accuracy
+        rf_accuracy = accuracy_score(
+            y_test,
+            rf_predictions
+        )
+
+        print(f"Accuracy : {rf_accuracy:.4f}")
+
+
+         # Precision
+        rf_precision = precision_score(
+            y_test,
+            rf_predictions
+        )
+
+        print(f"Precision : {rf_precision:.4f}")
+
+
+         # Recall
+        rf_recall = recall_score(
+            y_test,
+            rf_predictions
+        )
+
+        print(f"Recall : {rf_recall:.4f}")
+
+
+         # F1 Score
+        rf_f1 = f1_score(
+            y_test,
+            rf_predictions
+        )
+
+        print(f"F1 Score : {rf_f1:.4f}")
+
+
+         # ROC-AUC
+        rf_auc = roc_auc_score(
+            y_test,
+            rf_probabilities
+        )
+
+        print(f"ROC-AUC : {rf_auc:.4f}")
+
+        ```
+
+    - Classification Report
+
+        ```bash
+        print(
+            classification_report(
+                y_test,
+                rf_predictions,
+                target_names=["Extrovert", "Introvert"]
+            )
+        )
+        ```
+
+    - Confusion Matrix
+
+        ```bash
+        from sklearn.metrics import ConfusionMatrixDisplay
+        import matplotlib.pyplot as plt
+
+        cm = confusion_matrix(
+            y_test,
+            rf_predictions
+        )
+
+        ConfusionMatrixDisplay(
+            confusion_matrix=cm,
+            display_labels=["Extrovert", "Introvert"]
+        ).plot(cmap="Blues")
+
+        plt.title("Random Forest - Confusion Matrix")
+        plt.show()
+        ```
+        
+    - Feature Importance - Random Forest provides feature importance, which is valuable for explaining the model
+
+        ```bash
+        import pandas as pd
+
+        feature_importance = pd.DataFrame({
+            "Feature": X.columns,
+            "Importance": rf_model.feature_importances_
+        })
+
+        feature_importance = feature_importance.sort_values(
+            by="Importance",
+            ascending=False
+        )
+
+        feature_importance
+        ```
+
+    - Visualize it
+
+        ```bash
+        import matplotlib.pyplot as plt
+
+        plt.figure(figsize=(10,6))
+
+        plt.barh(
+            feature_importance["Feature"],
+            feature_importance["Importance"]
+        )
+
+        plt.gca().invert_yaxis()
+
+        plt.title("Random Forest Feature Importance")
+
+        plt.xlabel("Importance")
+
+        plt.show()
+        ```
+
+    - Add Results to Comparison Table
+
+        ```bash
+        model_results.append({
+            "Model": "Random Forest",
+            "Accuracy": rf_accuracy,
+            "Precision": rf_precision,
+            "Recall": rf_recall,
+            "F1 Score": rf_f1,
+            "ROC-AUC": rf_auc
+        })
+        ```
+
+    - Compare with Logistic Regression
+
+        ```bash
+        results_df = pd.DataFrame(model_results)
+
+        results_df = results_df.sort_values(
+            by="Accuracy",
+            ascending=False
+        )
+
+        results_df
+        ```
+
+    - Save the Model
+
+        ```bash
+        joblib.dump(rf_model,"../model/random_forest.pkl")
+        ```
