@@ -453,8 +453,202 @@ jupyter notebook
 
 - Step 12 - Data Preprocessing
 
-- The goal of preprocessing is to transform the cleaned dataset into a format that machine learning algorithms can understand and use effectively.
+    - The goal of preprocessing is to transform the cleaned dataset into a format that machine learning algorithms can understand and use effectively.
 
+    - Prepare the cleaned dataset for machine learning algorithms
+
+        ```bash
+        Clean Dataset
+            ↓
+        Encode Categories
+            ↓
+        Split Features & Target
+            ↓
+        Train/Test Split
+            ↓
+        Scale Features (only when required)
+            ↓
+        Ready for Model Training
+        ```
+
+    - Create a Model Dataset
+
+    - Even though clean_df is already clean, we don't preprocess it directly. instead of that we Create another copy
+
+        ```bash
+        model_df = clean_df.copy()
+        ```
+
+    - A separate copy of the cleaned dataset was created for machine learning preprocessing. This preserves the cleaned dataset while allowing transformations required for model training.
+
+    - Inspect Data Types - to check Numeric columns, Object columns, Target column
+
+        ```bash
+        model_df.info()
+        ```
+    - Identify Feature Types
+
+        ```bash
+        categorical_columns = model_df.select_dtypes(include=["object", "string", "str"]).columns.tolist()
+
+        numeric_columns = model_df.select_dtypes(include=["number"]).columns.tolist()
+
+        print("Categorical Features:", categorical_columns)
+        print("Numerical Features:", numeric_columns)
+        ```
+
+    - Output 
+
+        ```bash
+        Categorical Features: ['Stage_fear', 'Drained_after_socializing', 'Personality']
+
+        Numerical Features: ['Time_spent_Alone', 'Social_event_attendance', 'Going_outside', 'Friends_circle_size', 'Post_frequency', 'Social_Activity_Score', 'Isolation_Index']
+        ```
+
+    - **Why do this?** Because Different preprocessing methods are applied to different data types.
+
+    - For Example
+
+        ```bash
+        | Type               | Preprocessing       |
+        | ------------------ | ------------------- |
+        | Numeric            | Scaling (sometimes) |
+        | Binary categorical | Mapping             |
+        | Target             | Label Encoding      |
+
+        ```
+
+    - Encode Binary Features - Suppose your dataset contains:**Yes** and **No**, Machine learning models cannot process text values. So Convert them into numbers.
+
+        ```bash
+        binary_mapping = {
+            "Yes": 1,
+            "No": 0
+        }
+
+        binary_features = [
+            "Stage_fear",
+            "Drained_after_socializing"
+        ]
+
+        for column in binary_features:
+            model_df[column] = model_df[column].map(binary_mapping)
+        ```
+
+    - **The reason not include "Personality" into binary feature or mapping is because Personality is not a feature. it is the target variable (label).**
+
+    - Encode the Target Variable - target is **Introvert** and **Extrovert** So Convert it into numbers
+
+        ```bash
+        from sklearn.preprocessing import LabelEncoder
+
+        target_encoder = LabelEncoder()
+
+        model_df["Personality"] = target_encoder.fit_transform(
+            model_df["Personality"]
+        )
+        ```
+    - Inspect the encoding
+
+        ```bash
+        print(target_encoder.classes_)
+        ```
+
+    - Save the encoder for deployment.
+
+        ```bash
+        joblib.dump(target_encoder, "../model/target_encoder.pkl")
+        ```
+
+    - Verify Encoding
+
+        ```bash
+        model_df.head()
+
+        # then
+
+        model_df.info()
+        ```
+
+    - Separate Features and Target
+
+    - Features : x and Target : y
+
+        ```bash
+        X = model_df.drop("Personality", axis=1)
+
+        y = model_df["Personality"]
+        ```
+
+    - Check 
+
+        ```bash
+        print(X.head())
+        print(y.head())
+        ```
+
+    - Verify the shapes
+
+        ```bash
+        print("Features:", X.shape)
+        print("Target:", y.shape)
+        ```
+
+    - Train-Test Split - split the data into training and testing sets.
+
+        ```bash
+        from sklearn.model_selection import train_test_split
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X,
+            y,
+            test_size=0.20,
+            random_state=42,
+            stratify=y
+        )
+        ```
+    - Verify the split
+
+        ```bash
+        print("Training Features:", X_train.shape)
+        print("Testing Features:", X_test.shape)
+
+        print("Training Labels:", y_train.shape)
+        print("Testing Labels:", y_test.shape)
+        ```
+
+    - Feature Scaling
+
+    - Do all models require scaling?
+
+        ```bash
+        | Model               | Scaling Required?|
+        | ------------------- | -----------------|
+        | Logistic Regression |  Yes             |
+        | Random Forest       |  No              |
+        | XGBoost             |  No              |
+
+        ```
+
+    - Create scaled versions only for Logistic Regression
+
+        ```bash
+        from sklearn.preprocessing import StandardScaler
+
+        scaler = StandardScaler()
+
+        X_train_scaled = scaler.fit_transform(X_train)
+
+        X_test_scaled = scaler.transform(X_test)
+        ```
+
+    - Save the scaler as well
+
+        ```bash
+
+        joblib.dump(scaler, "../model/scaler.pkl")
+
+        ```
 
 - Step 13 - Baseline Models
 
