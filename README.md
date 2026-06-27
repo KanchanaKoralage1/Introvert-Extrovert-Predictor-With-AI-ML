@@ -1315,147 +1315,147 @@ jupyter notebook
 
 ## Create the FastAPI Application
 
-    - Go inside app/ and create 
+- Go inside app/ and create 
 
-        ```bash
-        __init__.py  # This purpose is simply to make app a Python package
-        main.py      # API endpoints
-        predict.py   # Model loading & prediction
-        schemas.py   # Request validation
+    ```bash
+    __init__.py  # This purpose is simply to make app a Python package
+    main.py      # API endpoints
+    predict.py   # Model loading & prediction
+    schemas.py   # Request validation
 
-        ```
-    - Before our ML model sees it, FastAPI checks
+    ```
+- Before our ML model sees it, FastAPI checks
 
-        ```bash
-        Is every field present?
+    ```bash
+    Is every field present?
 
-        Are the data types correct?
+    Are the data types correct?
 
-        Is the JSON valid?
+    Is the JSON valid?
 
-        ```
-    - This is the job of Pydantic
+    ```
+- This is the job of Pydantic
 
-    - app/predict.py
+- app/predict.py
 
-    - This file will contain all ML logic. this is the "brain" of the application.
+- This file will contain all ML logic. this is the "brain" of the application.
 
-    - This will
+- This will
 
-        ```bash
-        Load Model
-        ↓
-        Load Encoder
-        ↓
-        Convert Yes/No
-        ↓
-        Create DataFrame
-        ↓
-        Predict
-        ↓
-        Return Introvert/Extrovert
-        ```
-    - Basic code of predict.py
+    ```bash
+    Load Model
+    ↓
+    Load Encoder
+    ↓
+    Convert Yes/No
+    ↓
+    Create DataFrame
+    ↓
+    Predict
+    ↓
+    Return Introvert/Extrovert
+    ```
+- Basic code of predict.py
 
-        ```bash
-        import joblib
-        from pathlib import Path
-
-
-        BASE_DIR = Path(__file__).resolve().parent.parent
-
-        MODEL_PATH = BASE_DIR / "model" / "xgboost.pkl"
-        ENCODER_PATH = BASE_DIR / "model" / "target_encoder.pkl"
-
-        model = joblib.load(MODEL_PATH)
-        target_encoder = joblib.load(ENCODER_PATH)
-
-        ```
-    - inside app/schemas.py
-
-        ```bash
-        from pydantic import BaseModel
+    ```bash
+    import joblib
+    from pathlib import Path
 
 
-        class PersonalityRequest(BaseModel):
-            Time_spent_Alone: float
-            Stage_fear: str
-            Social_event_attendance: float
-            Going_outside: float
-            Drained_after_socializing: str
-            Friends_circle_size: float
-            Post_frequency: float
-            Social_Activity_Score: float
-            Isolation_Index: float
-        ```
-    - main.py
+    BASE_DIR = Path(__file__).resolve().parent.parent
 
-        ```bash
-        from fastapi import FastAPI
+    MODEL_PATH = BASE_DIR / "model" / "xgboost.pkl"
+    ENCODER_PATH = BASE_DIR / "model" / "target_encoder.pkl"
 
-        from app.schemas import PersonalityRequest
-        from app.predict import predict_personality
+    model = joblib.load(MODEL_PATH)
+    target_encoder = joblib.load(ENCODER_PATH)
 
-        app = FastAPI(
-            title="Introvert-Extrovert Prediction API",
-            description="Predict whether a person is an Introvert or Extrovert using a trained XGBoost model.",
-            version="1.0.0"
-        )
+    ```
+- inside app/schemas.py
+
+    ```bash
+    from pydantic import BaseModel
 
 
-        @app.get("/")
-        def home():
-            return {
-                "message": "Introvert-Extrovert Prediction API is running."
-            }
+    class PersonalityRequest(BaseModel):
+        Time_spent_Alone: float
+        Stage_fear: str
+        Social_event_attendance: float
+        Going_outside: float
+        Drained_after_socializing: str
+        Friends_circle_size: float
+        Post_frequency: float
+        Social_Activity_Score: float
+        Isolation_Index: float
+    ```
+- main.py
+
+    ```bash
+    from fastapi import FastAPI
+
+    from app.schemas import PersonalityRequest
+    from app.predict import predict_personality
+
+    app = FastAPI(
+        title="Introvert-Extrovert Prediction API",
+        description="Predict whether a person is an Introvert or Extrovert using a trained XGBoost model.",
+        version="1.0.0"
+    )
 
 
-        @app.post("/predict")
-        def predict(request: PersonalityRequest):
-
-            prediction = predict_personality(request)
-
-            return {
-                "prediction": prediction
-            }
-        ```
-
-    - Activate venv
-
-        ```bash
-        venv\Scripts\activate
-        ```
-    - Run the API
-
-        ```bash
-        uvicorn app.main:app --reload
-
-        # Uvicorn running on http://127.0.0.1:8000
-        # Open Swagger UI - http://127.0.0.1:8000/docs
-        ```
-
-    - Testing part - go to swagger UI POST/predicT
-
-        ```bash
-        {
-        "Time_spent_Alone": 7,
-        "Stage_fear": "Yes",
-        "Social_event_attendance": 2,
-        "Going_outside": 2,
-        "Drained_after_socializing": "Yes",
-        "Friends_circle_size": 3,
-        "Post_frequency": 1,
-        "Social_Activity_Score": 4,
-        "Isolation_Index": 8
+    @app.get("/")
+    def home():
+        return {
+            "message": "Introvert-Extrovert Prediction API is running."
         }
-        ``` 
-    - Expected result should be either Introvert or Extrovert. It is based on model.
 
-        ```bash
-        {
-        "prediction": "Introvert"
+
+    @app.post("/predict")
+    def predict(request: PersonalityRequest):
+
+        prediction = predict_personality(request)
+
+        return {
+            "prediction": prediction
         }
-        ```
+    ```
+
+- Activate venv
+
+    ```bash
+    venv\Scripts\activate
+    ```
+- Run the API
+
+    ```bash
+    uvicorn app.main:app --reload
+
+    # Uvicorn running on http://127.0.0.1:8000
+    # Open Swagger UI - http://127.0.0.1:8000/docs
+    ```
+
+- Testing part - go to swagger UI POST/predicT
+
+    ```bash
+    {
+    "Time_spent_Alone": 7,
+    "Stage_fear": "Yes",
+    "Social_event_attendance": 2,
+    "Going_outside": 2,
+    "Drained_after_socializing": "Yes",
+    "Friends_circle_size": 3,
+    "Post_frequency": 1,
+    "Social_Activity_Score": 4,
+    "Isolation_Index": 8
+    }
+    ``` 
+- Expected result should be either Introvert or Extrovert. It is based on model.
+
+    ```bash
+    {
+    "prediction": "Introvert"
+    }
+    ```
 
 ## Deploy app on render
 
