@@ -1092,3 +1092,210 @@ jupyter notebook
         ```bash
         joblib.dump(rf_model,"../model/random_forest.pkl")
         ```
+
+- Step 15 - XGBoost Classifier - Boosting model
+
+    - First install xgboost into requirements.txt
+
+        ```bash
+        pip install xgboost
+        ```
+
+    - Import XGBoost
+
+        ```bash
+        from xgboost import XGBClassifier
+        ```
+
+    - Create the Model
+
+        ```bash
+        xgb_model = XGBClassifier(
+            n_estimators=100,
+            learning_rate=0.1,
+            max_depth=6,
+            random_state=42,
+            eval_metric="logloss"
+        )
+        ```
+
+    - Train the Model
+
+        ```bash
+        xgb_model.fit(
+            X_train,
+            y_train
+        )
+        ```
+
+    - Make Predictions
+
+        ```bash
+        xgb_predictions = xgb_model.predict(
+            X_test
+        )
+
+        # Prediction probabilities
+
+        xgb_probabilities = xgb_model.predict_proba(
+            X_test
+        )[:, 1]
+
+        ```
+
+        - Evaluate Performance
+
+        ```bash
+         # Accuracy
+        xgb_accuracy = accuracy_score(
+            y_test,
+            xgb_predictions
+        )
+
+        print(f"Accuracy : {xgb_accuracy:.4f}")
+
+         # Precision
+        xgb_precision = precision_score(
+            y_test,
+            xgb_predictions
+        )
+
+        print(f"Precision : {xgb_precision:.4f}")
+
+
+         # Recall
+        xgb_recall = recall_score(
+            y_test,
+            xgb_predictions
+        )
+
+        print(f"Recall : {xgb_recall:.4f}")
+
+
+         # F1 Score
+        xgb_f1 = f1_score(
+            y_test,
+            xgb_predictions
+        )
+
+        print(f"F1 Score : {xgb_f1:.4f}")
+
+
+         # ROC-AUC
+        xgb_auc = roc_auc_score(
+            y_test,
+            xgb_probabilities
+        )
+
+        print(f"ROC-AUC : {xgb_auc:.4f}")
+
+        ```
+
+    - Classification Report
+
+        ```bash
+        print(
+            classification_report(
+                y_test,
+                xgb_predictions,
+                target_names=["Extrovert", "Introvert"]
+            )
+        )
+        ```
+
+    - Confusion Matrix
+
+        ```bash
+
+        cm = confusion_matrix(
+            y_test,
+            xgb_predictions
+        )
+
+        ConfusionMatrixDisplay(
+            confusion_matrix=cm,
+            display_labels=["Extrovert", "Introvert"]
+        ).plot(cmap="Blues")
+
+        plt.title("XGBoost - Confusion Matrix")
+
+        plt.show()
+
+        ```
+
+    - Feature Importance
+
+        ```bash
+
+        feature_importance_xgb = pd.DataFrame({
+            "Feature": X.columns,
+            "Importance": xgb_model.feature_importances_
+        })
+
+        feature_importance_xgb = feature_importance_xgb.sort_values(
+            by="Importance",
+            ascending=False
+        )
+
+        feature_importance_xgb
+
+        ```
+
+    - Visualization
+
+        ```bash
+
+        plt.figure(figsize=(10,6))
+
+        plt.barh(
+            feature_importance_xgb["Feature"],
+            feature_importance_xgb["Importance"]
+        )
+
+        plt.gca().invert_yaxis()
+
+        plt.title("XGBoost Feature Importance")
+
+        plt.xlabel("Importance")
+
+        plt.show()
+
+        ```
+
+    - Update Comparison Table
+
+        ```bash
+
+        model_results.append({
+            "Model": "XGBoost",
+            "Accuracy": xgb_accuracy,
+            "Precision": xgb_precision,
+            "Recall": xgb_recall,
+            "F1 Score": xgb_f1,
+            "ROC-AUC": xgb_auc
+        })
+        ```
+
+    - Recreate the comparison table.
+
+        ```bash
+
+        results_df = pd.DataFrame(model_results)
+
+        results_df = results_df.sort_values(
+            by="Accuracy",
+            ascending=False
+        )
+
+        results_df.reset_index(drop=True, inplace=True)
+
+        results_df
+
+        ```
+
+    - Save the Model
+
+        ```bash
+        joblib.dump(xgb_model,"../model/xgboost.pkl")
+
+        ```
