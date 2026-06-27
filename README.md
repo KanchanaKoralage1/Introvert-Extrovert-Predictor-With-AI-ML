@@ -1322,8 +1322,8 @@ jupyter notebook
         main.py      # API endpoints
         predict.py   # Model loading & prediction
         schemas.py   # Request validation
+
         ```
-    
     - Before our ML model sees it, FastAPI checks
 
         ```bash
@@ -1355,7 +1355,6 @@ jupyter notebook
         ↓
         Return Introvert/Extrovert
         ```
-
     - Basic code of predict.py
 
         ```bash
@@ -1372,7 +1371,6 @@ jupyter notebook
         target_encoder = joblib.load(ENCODER_PATH)
 
         ```
-
     - inside app/schemas.py
 
         ```bash
