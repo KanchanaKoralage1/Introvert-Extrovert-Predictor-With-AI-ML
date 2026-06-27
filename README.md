@@ -43,3 +43,1418 @@ pip install pandas numpy scikit-learn fastapi uvicorn joblib jupyter
 - First i downloaded the dataset and place it inside raw/ folder
 
 - then create .gitignore file and put raw/ venv/ and other relevent files.
+
+- Open the jupyter notebook
+
+```bash
+jupyter notebook
+```
+
+## Explore the dataset
+
+- Step 1 - import most commonly using libraries
+
+    ```bash
+    import pandas as pd
+    import numpy as np
+    ```
+
+- Step 2 - Load the dataset
+
+    ```bash
+    df = pd.read_csv("../data/raw/personality_dataset.csv")
+    ```
+
+- Step 3 - View the sample of the dataset
+
+    ```bash
+
+    # using this only can view 5 data sample
+    df.head()
+
+    df.sample(10)
+    ```
+
+- Step 4 - Dataset inspection
+
+- This step identifies numerical and categorical attributes and helps determine required preprocessing operations.
+
+    - Shape of the dataset
+
+        ```bash
+        df.shape  # (2900, 8)
+        ```
+
+    - Column Names
+
+        ```bash
+        df.columns
+        ```
+
+    - Data types
+
+        ```bash
+        df.dtypes
+
+        or
+
+        df.info()
+        ```
+
+- Step 5 - Data Quality
+
+    - Find the Missing Values
+
+        ```bash
+        df.isnull().sum()
+        ```
+    - Output
+
+        ```bash
+        Time_spent_Alone             63
+        Stage_fear                   73
+        Social_event_attendance      62
+        Going_outside                66
+        Drained_after_socializing    52
+        Friends_circle_size          77
+        Post_frequency               65
+        Personality                   0
+        dtype: int64
+        ```
+    - Duplicate Records
+
+        ```bash
+        df.duplicated().sum()  # np.int64(388)
+        ```
+
+    - Unique Values
+
+        ```bash
+        for col in df.columns:
+        print(col)
+        print(df[col].nunique())
+        print()
+        ```
+    - Target Distribution - This analysis determines whether the dataset is balanced or imbalanced.
+
+        ```bash
+        df["Personality"].value_counts()
+        ```
+    - Output
+
+        ```bash
+        Personality
+        Extrovert    1491
+        Introvert    1409
+        Name: count, dtype: int64
+        ```
+- Step 6 - Statistical Summary
+
+    - Numerical columns - Looking for min, max, mean, std
+
+        ```bash
+        df.describe()
+        ```
+
+    - Output
+
+        ```bash
+                    Time_spent_Alone	Social_event_attendance	    Going_outside	 Friends_circle_size	Post_frequency
+        count	    2837.000000	        2838.000000	                2834.000000	     2823.000000	        2835.000000
+        mean	       4.505816	           3.963354	                   3.000000	        6.268863	           3.564727
+        std	           3.479192	           2.903827	                   2.247327	        4.289693	           2.926582
+        min	           0.000000	           0.000000	                   0.000000	        0.000000	           0.000000
+        25%	           2.000000	           2.000000	                   1.000000	        3.000000	           1.000000
+        50%	           4.000000	           3.000000	                   3.000000	        5.000000	           3.000000
+        75%	           8.000000	           6.000000	                   5.000000	       10.000000	           6.000000
+        max	          11.000000	          10.000000	                   7.000000	       15.000000	          10.000000
+
+        ```
+- Step 7 - Outlier Detection
+
+    - Boxplots
+
+        ```bash
+        numeric_cols = df.select_dtypes(
+            include=np.number
+        ).columns
+
+        for col in numeric_cols:
+            plt.figure(figsize=(6,2))
+            sns.boxplot(
+                x=df[col]
+            )
+            plt.title(col)
+            plt.show()
+        ```
+
+    - IQR Method
+
+        ```bash
+        Q1 = df[numeric_cols].quantile(0.25)
+        Q3 = df[numeric_cols].quantile(0.75)
+
+        IQR = Q3 - Q1
+        ```
+
+    - Count outliers
+
+        ```bash
+        outliers = (
+            (
+                df[numeric_cols] <
+                (Q1 - 1.5*IQR)
+            ) |
+            (
+                df[numeric_cols] >
+                (Q3 + 1.5*IQR)
+            )
+        )
+
+        outliers.sum()
+
+        ```
+
+- Step 8 - Exploratory Data Analysis (EDA)
+
+    - Personality Distribution
+
+        ```bash
+        sns.countplot(
+            x="Personality",
+            data=df
+        )
+        ```
+
+    - Time Alone vs Personality - Introverts generally spend more time alone compared to extroverts.
+
+        ```bash
+        sns.boxplot(
+            x="Personality",
+            y="Time_spent_Alone",
+            data=df
+        )
+        ```
+
+    - Social Events vs Personality
+
+        ```bash
+        sns.boxplot(
+            x="Personality",
+            y="Social_event_attendance",
+            data=df
+        )
+        ```
+
+    - Friend Circle Size
+
+        ```bash
+        sns.boxplot(
+            x="Personality",
+            y="Friends_circle_size",
+            data=df
+        )
+        ```
+
+    - Stage Fear Analysis
+
+        ```bash
+        pd.crosstab(
+            df["Stage_fear"],
+            df["Personality"]
+        )
+        ```
+- Step 9 - Correlation Analysis - Correlation analysis identifies relationships among variables and potential multicollinearity issues.
+
+    - Encode temporary copy
+
+        ```bash
+        eda_df = df.copy()
+        ```
+
+    - Convert categories
+
+        ```bash
+        for col in eda_df.select_dtypes(
+            include="object"
+        ):
+            eda_df[col] = LabelEncoder().fit_transform(
+                eda_df[col]
+            )
+        ```
+
+    - Correlation matrix
+
+        ```bash
+        corr = eda_df.corr()
+
+        plt.figure(figsize=(10,8))
+
+        sns.heatmap(
+            corr,
+            annot=True,
+            cmap="coolwarm"
+        )
+
+        plt.show()
+        ```
+
+- Step 10 - Feature Engineering 
+
+    - means creating new columns (features) from your existing data to help the machine learning model understand patterns more easily.
+
+    - It is one of the most important and creative parts of any ML project. Good feature engineering often improves model accuracy more than changing the model itself.
+
+    **What is Happening in This Code?**
+
+    -  In here i'm creating two new features:
+
+        - 1. Social_Activity_Score
+            ```bash
+            Pythondf["Social_Activity_Score"] = (
+                df["Social_event_attendance"] +
+                df["Going_outside"] +
+                df["Post_frequency"]
+            )
+            ```
+
+            - What it does:
+            - It adds up 3 related columns that represent how socially active a person is.
+            - → Higher score = More socially active person (likely Extrovert)
+
+        - 2. Isolation_Index
+
+            ```bash
+            Pythondf["Isolation_Index"] = (
+                df["Time_spent_Alone"] -
+                df["Social_event_attendance"]
+            )
+            ```
+
+            - What it does:
+            - It measures the difference between time spent alone and social activity.
+            - → Higher value = More isolated (likely Introvert)
+
+- Step 11 - Data Cleaning
+
+    - Create a Cleaning Copy - Don't modify the original dataset directly.
+
+        ```bash
+        clean_df = df.copy()
+        ```
+
+    - Handle Duplicate Records
+
+        ```bash
+        duplicates = clean_df.duplicated().sum()
+
+        print(f"Duplicate rows: {duplicates}")
+        ```
+    - If duplicates exists then remove duplicates
+
+        ```bash
+        clean_df = clean_df.drop_duplicates()
+
+        # then again check 
+        clean_df.duplicated().sum()
+        ```
+
+    - Handle Missing Values
+
+        ```bash
+        clean_df.isnull().sum()
+        ```
+
+    - Output
+
+        ```bash
+        Time_spent_Alone              61
+        Stage_fear                    73
+        Social_event_attendance       61
+        Going_outside                 65
+        Drained_after_socializing     51
+        Friends_circle_size           75
+        Post_frequency                63
+        Personality                    0
+        Social_Activity_Score        183
+        Isolation_Index              121
+        dtype: int64
+        ```
+
+    - Numerical Features - Fill missing values with the median
+
+        ```bash
+        from sklearn.impute import SimpleImputer
+        numeric_columns = clean_df.select_dtypes(include=['int64', 'float64']).columns
+
+        num_imputer = SimpleImputer(strategy="median")
+
+        clean_df[numeric_columns] = num_imputer.fit_transform(
+            clean_df[numeric_columns]
+        )
+        ```
+
+    - Categorical Features - Fill missing values with the most frequent value
+
+        ```bash
+        categorical_columns = clean_df.select_dtypes(
+            include=['object', 'string', 'category']
+        ).columns
+
+        cat_imputer = SimpleImputer(strategy="most_frequent")
+
+        clean_df[categorical_columns] = cat_imputer.fit_transform(
+            clean_df[categorical_columns]
+        )
+        ```
+
+    - Then Verify Missing Values
+
+        ```bash
+        clean_df.isnull().sum()
+
+        # expect 0 for all 
+        ```
+    - Verify Data Types
+
+        ```bash
+        clean_df.info()
+        ```
+
+    - Final Dataset Validation - Finally, verify that the cleaned dataset is ready for preprocessing.
+    
+        ```bash
+        print("Shape:", clean_df.shape)
+
+        print("Missing values:")
+        print(clean_df.isnull().sum())
+
+        print("Duplicate rows:", clean_df.duplicated().sum())
+        ```
+    - Output
+
+        ```bash
+        Shape: (2499, 10)
+        Missing values:
+        Time_spent_Alone             0
+        Stage_fear                   0
+        Social_event_attendance      0
+        Going_outside                0
+        Drained_after_socializing    0
+        Friends_circle_size          0
+        Post_frequency               0
+        Personality                  0
+        Social_Activity_Score        0
+        Isolation_Index              0
+        dtype: int64
+        Duplicate rows: 0
+        ```
+
+
+- Step 12 - Data Preprocessing
+
+    - The goal of preprocessing is to transform the cleaned dataset into a format that machine learning algorithms can understand and use effectively.
+
+    - Prepare the cleaned dataset for machine learning algorithms
+
+        ```bash
+        Clean Dataset
+            ↓
+        Encode Categories
+            ↓
+        Split Features & Target
+            ↓
+        Train/Test Split
+            ↓
+        Scale Features (only when required)
+            ↓
+        Ready for Model Training
+        ```
+
+    - Create a Model Dataset
+
+    - Even though clean_df is already clean, we don't preprocess it directly. instead of that we Create another copy
+
+        ```bash
+        model_df = clean_df.copy()
+        ```
+
+    - A separate copy of the cleaned dataset was created for machine learning preprocessing. This preserves the cleaned dataset while allowing transformations required for model training.
+
+    - Inspect Data Types - to check Numeric columns, Object columns, Target column
+
+        ```bash
+        model_df.info()
+        ```
+    - Identify Feature Types
+
+        ```bash
+        categorical_columns = model_df.select_dtypes(include=["object", "string", "str"]).columns.tolist()
+
+        numeric_columns = model_df.select_dtypes(include=["number"]).columns.tolist()
+
+        print("Categorical Features:", categorical_columns)
+        print("Numerical Features:", numeric_columns)
+        ```
+
+    - Output 
+
+        ```bash
+        Categorical Features: ['Stage_fear', 'Drained_after_socializing', 'Personality']
+
+        Numerical Features: ['Time_spent_Alone', 'Social_event_attendance', 'Going_outside', 'Friends_circle_size', 'Post_frequency', 'Social_Activity_Score', 'Isolation_Index']
+        ```
+
+    - **Why do this?** Because Different preprocessing methods are applied to different data types.
+
+    - For Example
+
+        ```bash
+        | Type               | Preprocessing       |
+        | ------------------ | ------------------- |
+        | Numeric            | Scaling (sometimes) |
+        | Binary categorical | Mapping             |
+        | Target             | Label Encoding      |
+
+        ```
+
+    - Encode Binary Features - Suppose your dataset contains:**Yes** and **No**, Machine learning models cannot process text values. So Convert them into numbers.
+
+        ```bash
+        binary_mapping = {
+            "Yes": 1,
+            "No": 0
+        }
+
+        binary_features = [
+            "Stage_fear",
+            "Drained_after_socializing"
+        ]
+
+        for column in binary_features:
+            model_df[column] = model_df[column].map(binary_mapping)
+        ```
+
+    - **The reason not include "Personality" into binary feature or mapping is because Personality is not a feature. it is the target variable (label).**
+
+    - Encode the Target Variable - target is **Introvert** and **Extrovert** So Convert it into numbers
+
+        ```bash
+        from sklearn.preprocessing import LabelEncoder
+
+        target_encoder = LabelEncoder()
+
+        model_df["Personality"] = target_encoder.fit_transform(
+            model_df["Personality"]
+        )
+        ```
+    - Inspect the encoding
+
+        ```bash
+        print(target_encoder.classes_)
+        ```
+
+    - Save the encoder for deployment.
+
+        ```bash
+        joblib.dump(target_encoder, "../model/target_encoder.pkl")
+        ```
+
+    - Verify Encoding
+
+        ```bash
+        model_df.head()
+
+        # then
+
+        model_df.info()
+        ```
+
+    - Separate Features and Target
+
+    - Features : x and Target : y
+
+        ```bash
+        X = model_df.drop("Personality", axis=1)
+
+        y = model_df["Personality"]
+        ```
+
+    - Check 
+
+        ```bash
+        print(X.head())
+        print(y.head())
+        ```
+
+    - Verify the shapes
+
+        ```bash
+        print("Features:", X.shape)
+        print("Target:", y.shape)
+        ```
+
+    - Train-Test Split - split the data into training and testing sets.
+
+        ```bash
+        from sklearn.model_selection import train_test_split
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X,
+            y,
+            test_size=0.20,
+            random_state=42,
+            stratify=y
+        )
+        ```
+    - Verify the split
+
+        ```bash
+        print("Training Features:", X_train.shape)
+        print("Testing Features:", X_test.shape)
+
+        print("Training Labels:", y_train.shape)
+        print("Testing Labels:", y_test.shape)
+        ```
+
+    - Feature Scaling
+
+    - Do all models require scaling?
+
+        ```bash
+        | Model               | Scaling Required?|
+        | ------------------- | -----------------|
+        | Logistic Regression |  Yes             |
+        | Random Forest       |  No              |
+        | XGBoost             |  No              |
+
+        ```
+
+    - Create scaled versions only for Logistic Regression
+
+        ```bash
+        from sklearn.preprocessing import StandardScaler
+
+        scaler = StandardScaler()
+
+        X_train_scaled = scaler.fit_transform(X_train)
+
+        X_test_scaled = scaler.transform(X_test)
+        ```
+
+    - Save the scaler as well
+
+        ```bash
+
+        joblib.dump(scaler, "../model/scaler.pkl")
+
+        ```
+
+- Step 13 - Baseline Models
+
+    - Train multiple models. (ex :- Logistic Regression, Random Forest, Gradient Boosting)
+
+    - Why train multiple models?
+
+    - We train multiple models to compare their performance and choose the best one for the problem, rather than blindly assuming one model will work well.
+
+    - Main Reasons:
+
+        - 1. Different models have different strengths
+            - Some models are simple and easy to interpret (e.g., Logistic Regression).
+            - Some are powerful at capturing complex patterns (e.g., Random Forest, XGBoost).
+            - Some are more robust to noisy data.
+
+        - 2. No single model is best for every dataset
+            - Every dataset is different. What works well on one project may not work well on another.
+
+        - 3. To find the best performance
+            - By comparing models, we can select the one that gives the highest accuracy, AUC, or F1-score on our data.
+
+    - A common comparison might look like:
+
+    ```bash
+    | Model                                     | Type     | Why include it?                                  |
+    | ----------------------------------------- | -------- | ------------------------------------------------ |
+    | Logistic Regression                       | Baseline | Simple, fast, interpretable                      |
+    | Random Forest                             | Ensemble | Handles nonlinear relationships, robust to noise |
+    | Gradient Boosting (or XGBoost if allowed) | Boosting | Often achieves higher predictive performance     |
+
+    ```
+
+    - **1. Baseline Model**
+
+        - What it is: The simplest possible model.
+        - Purpose: Acts as a reference point or "minimum score".
+        - Example: Logistic Regression
+
+        - **Simple Analogy**:
+        - Imagine you are trying to guess whether a person is Introvert or Extrovert by just looking at one simple rule - for example, “If they spend more than 5 hours alone, they are Introvert, else Extrovert.”
+
+        - This the **Baseline**. It’s a very basic and simple approach.
+
+        - **Why we use it?**
+        - If your advanced models are not much better than the baseline, then something is wrong with your data or features.
+
+    - **2. Ensemble Model**
+
+        - What it is: A model that combines many small models to make one strong model.
+        - Main Idea: "Many heads are better than one."
+        - Popular Example: Random Forest
+
+        - **Simple Analogy**:
+        Instead of trusting just one person’s opinion about whether someone is Introvert or Extrovert, you ask 100 different people (each looking at different behaviors like time spent alone, social events, friends circle, etc.) and take the majority vote.
+        This is Random Forest — many small decision trees working together.
+
+        - **Key Advantage**:
+        - It reduces big mistakes and gives more stable and reliable predictions. It is less likely to get confused by noisy data (like someone who sometimes behaves like an introvert and sometimes like an extrovert).
+
+    - **3. Boosting**
+
+        - What it is: A special type of Ensemble where models are built one after another, learning from previous mistakes.
+        - Popular Examples: XGBoost, LightGBM, Gradient Boosting
+
+        - **Simple Analogy**:
+        - Think of a group of students trying to identify Introverts and Extroverts:
+        - The first student makes some wrong predictions.
+        - The second student focuses especially on the cases where the first student was wrong.
+        - The third student focuses on the remaining difficult cases.
+        - Each new student learns from the previous students’ mistakes.
+
+        - In the end, the whole group becomes very good at correctly identifying Introvert vs Extrovert.
+        This is how Boosting (XGBoost) works.
+
+        - **Key Advantage**:
+        - It usually gives the highest accuracy, but it takes more time to train.
+
+    
+    - Baseline Model: Logistic Regression
+
+    - Without the baseline, you cannot say whether the advanced model actually improved performance. So Logistic Regression becomes our reference model.
+
+    - Import the Model
+
+        ```bash
+        from sklearn.linear_model import LogisticRegression
+        ```
+
+    - Create the Model
+
+        ```bash
+        lr_model = LogisticRegression(
+        random_state=42
+        )
+        ```
+
+    - Train the Model
+
+        ```bash
+        lr_model.fit(
+        X_train_scaled,
+        y_train
+        )
+        ```
+
+    - Make Predictions
+
+        ```bash
+        lr_predictions = lr_model.predict(
+        X_test_scaled
+        )
+
+        ```
+
+    - Check the first few predictions
+
+        ```bash
+        print(lr_predictions[:10])
+        ```
+
+    - Evaluate Performance - calculate **Accuracy**, **Precision**, **Recall**, **F1-score**, **Confusion Matrix**, **ROC-AUC**
+
+        ```bash
+        from sklearn.metrics import (
+        accuracy_score,
+        precision_score,
+        recall_score,
+        f1_score,
+        confusion_matrix,
+        classification_report,
+        roc_auc_score
+        )
+
+         # Accuracy
+
+        lr_accuracy = accuracy_score(
+            y_test,
+            lr_predictions
+        )
+
+        print(f"Accuracy : {lr_accuracy:.4f}")
+
+
+         # Precision
+
+        lr_precision = precision_score(
+            y_test,
+            lr_predictions
+        )
+
+        print(f"Precision : {lr_precision:.4f}")
+
+
+         # Recall
+        lr_recall = recall_score(
+            y_test,
+            lr_predictions
+        )
+
+        print(f"Recall : {lr_recall:.4f}")
+
+
+         # F1 Score
+
+        lr_f1 = f1_score(
+            y_test,
+            lr_predictions
+        )
+
+        print(f"F1 Score : {lr_f1:.4f}")
+
+
+         # ROC-AUC
+         # Instead of hard class labels, ROC-AUC evaluates how well the model separates the two classes across different decision thresholds.
+
+         # First obtain prediction probabilities.
+
+        lr_probabilities = lr_model.predict_proba(
+            X_test_scaled
+        )[:, 1]
+
+         # Then calculate ROC-AUC.
+
+        lr_auc = roc_auc_score(
+            y_test,
+            lr_probabilities
+        )
+
+        print(f"ROC-AUC : {lr_auc:.4f}")
+
+        ```
+
+    - Classification Report
+
+        ```bash
+
+        print(
+            classification_report(
+                y_test,
+                lr_predictions,
+                target_names=["Extrovert", "Introvert"]
+            )
+        )
+
+        ```
+    - Confusion Matrix
+
+        ```bash
+
+        cm = confusion_matrix(
+            y_test,
+            lr_predictions
+        )
+
+        print(cm)
+
+        ```
+    - Store the Results
+
+        ```bash
+        model_results = []
+
+        model_results.append({
+            "Model": "Logistic Regression",
+            "Accuracy": lr_accuracy,
+            "Precision": lr_precision,
+            "Recall": lr_recall,
+            "F1 Score": lr_f1,
+            "ROC-AUC": lr_auc
+        })
+        ```
+    - Save the model into model/ folder
+
+        ```bash
+        joblib.dump(lr_model, "../model/logistic_regression.pkl")
+        ```
+
+- Step 14 - Random Forest model (Ensemble Model)
+
+    - Import Random Forest
+
+        ```bash
+        from sklearn.ensemble import RandomForestClassifier
+        ```
+
+    - Create the Model
+
+        ```bash
+        rf_model = RandomForestClassifier(
+            n_estimators=100,
+            random_state=42
+        )
+        ```
+
+    - Train the Model
+
+        ```bash
+        rf_model.fit(
+            X_train,
+            y_train
+        )
+        ```
+
+    - Make Predictions
+
+        ```bash
+        rf_predictions = rf_model.predict(
+            X_test
+        )
+        ```
+
+    - Prediction probabilities
+
+        ```bash
+
+        rf_probabilities = rf_model.predict_proba(
+            X_test
+        )[:,1]
+
+        ```
+
+    - Evaluate Performance
+
+        ```bash
+        from sklearn.metrics import (
+            accuracy_score,
+            precision_score,
+            recall_score,
+            f1_score,
+            confusion_matrix,
+            classification_report,
+            roc_auc_score
+        )
+
+         # Accuracy
+        rf_accuracy = accuracy_score(
+            y_test,
+            rf_predictions
+        )
+
+        print(f"Accuracy : {rf_accuracy:.4f}")
+
+
+         # Precision
+        rf_precision = precision_score(
+            y_test,
+            rf_predictions
+        )
+
+        print(f"Precision : {rf_precision:.4f}")
+
+
+         # Recall
+        rf_recall = recall_score(
+            y_test,
+            rf_predictions
+        )
+
+        print(f"Recall : {rf_recall:.4f}")
+
+
+         # F1 Score
+        rf_f1 = f1_score(
+            y_test,
+            rf_predictions
+        )
+
+        print(f"F1 Score : {rf_f1:.4f}")
+
+
+         # ROC-AUC
+        rf_auc = roc_auc_score(
+            y_test,
+            rf_probabilities
+        )
+
+        print(f"ROC-AUC : {rf_auc:.4f}")
+
+        ```
+
+    - Classification Report
+
+        ```bash
+        print(
+            classification_report(
+                y_test,
+                rf_predictions,
+                target_names=["Extrovert", "Introvert"]
+            )
+        )
+        ```
+
+    - Confusion Matrix
+
+        ```bash
+        from sklearn.metrics import ConfusionMatrixDisplay
+        import matplotlib.pyplot as plt
+
+        cm = confusion_matrix(
+            y_test,
+            rf_predictions
+        )
+
+        ConfusionMatrixDisplay(
+            confusion_matrix=cm,
+            display_labels=["Extrovert", "Introvert"]
+        ).plot(cmap="Blues")
+
+        plt.title("Random Forest - Confusion Matrix")
+        plt.show()
+        ```
+        
+    - Feature Importance - Random Forest provides feature importance, which is valuable for explaining the model
+
+        ```bash
+        import pandas as pd
+
+        feature_importance = pd.DataFrame({
+            "Feature": X.columns,
+            "Importance": rf_model.feature_importances_
+        })
+
+        feature_importance = feature_importance.sort_values(
+            by="Importance",
+            ascending=False
+        )
+
+        feature_importance
+        ```
+
+    - Visualize it
+
+        ```bash
+        import matplotlib.pyplot as plt
+
+        plt.figure(figsize=(10,6))
+
+        plt.barh(
+            feature_importance["Feature"],
+            feature_importance["Importance"]
+        )
+
+        plt.gca().invert_yaxis()
+
+        plt.title("Random Forest Feature Importance")
+
+        plt.xlabel("Importance")
+
+        plt.show()
+        ```
+
+    - Add Results to Comparison Table
+
+        ```bash
+        model_results.append({
+            "Model": "Random Forest",
+            "Accuracy": rf_accuracy,
+            "Precision": rf_precision,
+            "Recall": rf_recall,
+            "F1 Score": rf_f1,
+            "ROC-AUC": rf_auc
+        })
+        ```
+
+    - Compare with Logistic Regression
+
+        ```bash
+        results_df = pd.DataFrame(model_results)
+
+        results_df = results_df.sort_values(
+            by="Accuracy",
+            ascending=False
+        )
+
+        results_df
+        ```
+
+    - Save the Model
+
+        ```bash
+        joblib.dump(rf_model,"../model/random_forest.pkl")
+        ```
+
+- Step 15 - XGBoost Classifier - Boosting model
+
+    - First install xgboost into requirements.txt
+
+        ```bash
+        pip install xgboost
+        ```
+
+    - Import XGBoost
+
+        ```bash
+        from xgboost import XGBClassifier
+        ```
+
+    - Create the Model
+
+        ```bash
+        xgb_model = XGBClassifier(
+            n_estimators=100,
+            learning_rate=0.1,
+            max_depth=6,
+            random_state=42,
+            eval_metric="logloss"
+        )
+        ```
+
+    - Train the Model
+
+        ```bash
+        xgb_model.fit(
+            X_train,
+            y_train
+        )
+        ```
+
+    - Make Predictions
+
+        ```bash
+        xgb_predictions = xgb_model.predict(
+            X_test
+        )
+
+        # Prediction probabilities
+
+        xgb_probabilities = xgb_model.predict_proba(
+            X_test
+        )[:, 1]
+
+        ```
+
+        - Evaluate Performance
+
+        ```bash
+         # Accuracy
+        xgb_accuracy = accuracy_score(
+            y_test,
+            xgb_predictions
+        )
+
+        print(f"Accuracy : {xgb_accuracy:.4f}")
+
+         # Precision
+        xgb_precision = precision_score(
+            y_test,
+            xgb_predictions
+        )
+
+        print(f"Precision : {xgb_precision:.4f}")
+
+
+         # Recall
+        xgb_recall = recall_score(
+            y_test,
+            xgb_predictions
+        )
+
+        print(f"Recall : {xgb_recall:.4f}")
+
+
+         # F1 Score
+        xgb_f1 = f1_score(
+            y_test,
+            xgb_predictions
+        )
+
+        print(f"F1 Score : {xgb_f1:.4f}")
+
+
+         # ROC-AUC
+        xgb_auc = roc_auc_score(
+            y_test,
+            xgb_probabilities
+        )
+
+        print(f"ROC-AUC : {xgb_auc:.4f}")
+
+        ```
+
+    - Classification Report
+
+        ```bash
+        print(
+            classification_report(
+                y_test,
+                xgb_predictions,
+                target_names=["Extrovert", "Introvert"]
+            )
+        )
+        ```
+
+    - Confusion Matrix
+
+        ```bash
+
+        cm = confusion_matrix(
+            y_test,
+            xgb_predictions
+        )
+
+        ConfusionMatrixDisplay(
+            confusion_matrix=cm,
+            display_labels=["Extrovert", "Introvert"]
+        ).plot(cmap="Blues")
+
+        plt.title("XGBoost - Confusion Matrix")
+
+        plt.show()
+
+        ```
+
+    - Feature Importance
+
+        ```bash
+
+        feature_importance_xgb = pd.DataFrame({
+            "Feature": X.columns,
+            "Importance": xgb_model.feature_importances_
+        })
+
+        feature_importance_xgb = feature_importance_xgb.sort_values(
+            by="Importance",
+            ascending=False
+        )
+
+        feature_importance_xgb
+
+        ```
+
+    - Visualization
+
+        ```bash
+
+        plt.figure(figsize=(10,6))
+
+        plt.barh(
+            feature_importance_xgb["Feature"],
+            feature_importance_xgb["Importance"]
+        )
+
+        plt.gca().invert_yaxis()
+
+        plt.title("XGBoost Feature Importance")
+
+        plt.xlabel("Importance")
+
+        plt.show()
+
+        ```
+
+    - Update Comparison Table
+
+        ```bash
+
+        model_results.append({
+            "Model": "XGBoost",
+            "Accuracy": xgb_accuracy,
+            "Precision": xgb_precision,
+            "Recall": xgb_recall,
+            "F1 Score": xgb_f1,
+            "ROC-AUC": xgb_auc
+        })
+        ```
+
+    - Recreate the comparison table.
+
+        ```bash
+
+        results_df = pd.DataFrame(model_results)
+
+        results_df = results_df.sort_values(
+            by="Accuracy",
+            ascending=False
+        )
+
+        results_df.reset_index(drop=True, inplace=True)
+
+        results_df
+
+        ```
+
+    - Save the Model
+
+        ```bash
+        joblib.dump(xgb_model,"../model/xgboost.pkl")
+
+        ```
+
+## Model Choose 
+
+- XGBoost has the best overall balance of metrics. So the best model is **XGBoost**
+
+```bash
+| Model               |   Accuracy |  Precision |     Recall |   F1 Score |    ROC-AUC |
+| ------------------- | ---------: | ---------: | ---------: | ---------: | ---------: |
+| XGBoost             | **93.40%** |     92.27% | **92.69%** | **92.48%** | **96.68%** |
+| Logistic Regression |     92.40% | **92.89%** |     89.50% |     91.16% |     94.96% |
+| Random Forest       |     91.40% |     91.90% |     88.13% |     89.98% |     94.96% |
+
+```
+
+## Create the FastAPI Application
+
+    - Go inside app/ and create 
+
+        ```bash
+        __init__.py  # This purpose is simply to make app a Python package
+        main.py      # API endpoints
+        predict.py   # Model loading & prediction
+        schemas.py   # Request validation
+        ```
+    
+    - Before our ML model sees it, FastAPI checks
+
+        ```bash
+        Is every field present?
+
+        Are the data types correct?
+
+        Is the JSON valid?
+
+        ```
+    - This is the job of Pydantic
+
+    - app/predict.py
+
+    - This file will contain all ML logic. this is the "brain" of the application.
+
+    - This will
+
+        ```bash
+        Load Model
+        ↓
+        Load Encoder
+        ↓
+        Convert Yes/No
+        ↓
+        Create DataFrame
+        ↓
+        Predict
+        ↓
+        Return Introvert/Extrovert
+        ```
+
+    - Basic code of predict.py
+
+        ```bash
+        import joblib
+        from pathlib import Path
+
+
+        BASE_DIR = Path(__file__).resolve().parent.parent
+
+        MODEL_PATH = BASE_DIR / "model" / "xgboost.pkl"
+        ENCODER_PATH = BASE_DIR / "model" / "target_encoder.pkl"
+
+        model = joblib.load(MODEL_PATH)
+        target_encoder = joblib.load(ENCODER_PATH)
+
+        ```
+
+    - inside app/schemas.py
+
+        ```bash
+        from pydantic import BaseModel
+
+
+        class PersonalityRequest(BaseModel):
+            Time_spent_Alone: float
+            Stage_fear: str
+            Social_event_attendance: float
+            Going_outside: float
+            Drained_after_socializing: str
+            Friends_circle_size: float
+            Post_frequency: float
+            Social_Activity_Score: float
+            Isolation_Index: float
+        ```
+    - main.py
+
+        ```bash
+        from fastapi import FastAPI
+
+        from app.schemas import PersonalityRequest
+        from app.predict import predict_personality
+
+        app = FastAPI(
+            title="Introvert-Extrovert Prediction API",
+            description="Predict whether a person is an Introvert or Extrovert using a trained XGBoost model.",
+            version="1.0.0"
+        )
+
+
+        @app.get("/")
+        def home():
+            return {
+                "message": "Introvert-Extrovert Prediction API is running."
+            }
+
+
+        @app.post("/predict")
+        def predict(request: PersonalityRequest):
+
+            prediction = predict_personality(request)
+
+            return {
+                "prediction": prediction
+            }
+        ```
+
+    - Activate venv
+
+        ```bash
+        venv\Scripts\activate
+        ```
+    - Run the API
+
+        ```bash
+        uvicorn app.main:app --reload
+
+        # Uvicorn running on http://127.0.0.1:8000
+        # Open Swagger UI - http://127.0.0.1:8000/docs
+        ```
+
+    - Testing part - go to swagger UI POST/predicT
+
+        ```bash
+        {
+        "Time_spent_Alone": 7,
+        "Stage_fear": "Yes",
+        "Social_event_attendance": 2,
+        "Going_outside": 2,
+        "Drained_after_socializing": "Yes",
+        "Friends_circle_size": 3,
+        "Post_frequency": 1,
+        "Social_Activity_Score": 4,
+        "Isolation_Index": 8
+        }
+        ``` 
+    - Expected result should be either Introvert or Extrovert. It is based on model.
+
+        ```bash
+        {
+        "prediction": "Introvert"
+        }
+        ```
