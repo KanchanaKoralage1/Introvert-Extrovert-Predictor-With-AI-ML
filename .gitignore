@@ -3,10 +3,6 @@ venv/
 env/
 ENV/
 
-backend/data/raw/*.csv
-backend/data/processed/*.csv
-models/*.pkl
-
 # Python
 __pycache__/
 *.py[cod]
@@ -37,7 +33,7 @@ dist/
 *.egg-info/
 
 # Model Artifacts
-*.pkl
+
 *.joblib
 
 # Testing

@@ -1299,3 +1299,84 @@ jupyter notebook
         joblib.dump(xgb_model,"../model/xgboost.pkl")
 
         ```
+
+## Model Choose 
+
+- XGBoost has the best overall balance of metrics. So the best model is **XGBoost**
+
+```bash
+| Model               |   Accuracy |  Precision |     Recall |   F1 Score |    ROC-AUC |
+| ------------------- | ---------: | ---------: | ---------: | ---------: | ---------: |
+| XGBoost             | **93.40%** |     92.27% | **92.69%** | **92.48%** | **96.68%** |
+| Logistic Regression |     92.40% | **92.89%** |     89.50% |     91.16% |     94.96% |
+| Random Forest       |     91.40% |     91.90% |     88.13% |     89.98% |     94.96% |
+
+```
+
+## Hyperparameter Tuning (XGBoost) 
+
+- After comparing the baseline models, XGBoost achieved the highest predictive performance. Therefore, hyperparameter tuning is performed only on the XGBoost model to further optimize its performance while avoiding unnecessary computation on lower-performing models
+
+- Current workflow
+
+```bash
+Train Multiple Models
+        ↓
+Compare Performance
+        ↓
+Choose Best Model
+        ↓
+Hyperparameter Tuning
+        ↓
+Evaluate Again
+        ↓
+Save Best Model
+```
+
+- Step 1 - Import RandomizedSearchCV
+
+```bash
+from sklearn.model_selection import RandomizedSearchCV
+```
+
+- Step 2 - Define Parameter Grid 
+- search reasonable parameter space.
+
+```bash
+
+param_grid = {
+    "n_estimators": [50, 100, 150, 200],
+    "max_depth": [3, 4, 5, 6, 7],
+    "learning_rate": [0.01, 0.05, 0.1, 0.2],
+    "subsample": [0.8, 0.9, 1.0],
+    "colsample_bytree": [0.8, 0.9, 1.0]
+}
+
+```
+
+- Step 3 -Create Randomized Search
+
+```bash
+
+random_search = RandomizedSearchCV(
+    estimator=XGBClassifier(
+        random_state=42,
+        eval_metric="logloss"
+    ),
+    param_distributions=param_grid,
+    n_iter=20,
+    scoring="accuracy",
+    cv=5,
+    verbose=1,
+    random_state=42,
+    n_jobs=-1
+)
+
+```
+
+    - n_iter=20 → Tests 20 random combinations (much faster than Grid Search).
+    - cv=5 → Uses 5-fold cross-validation for reliable evaluation.
+    - scoring="accuracy" → Optimizes for classification accuracy.
+    - n_jobs=-1 → Uses all CPU cores.
+
+- Step 4 - 
