@@ -33,7 +33,13 @@ def predict_personality(data):
     }])
 
     prediction = model.predict(input_df)
+    probabilities = model.predict_proba(input_df)
 
     personality = target_encoder.inverse_transform(prediction)[0]
 
-    return personality
+    confidence = float(max(probabilities[0]))
+
+    return {
+        "prediction": personality,
+        "confidence": round(confidence * 100, 2)
+    }

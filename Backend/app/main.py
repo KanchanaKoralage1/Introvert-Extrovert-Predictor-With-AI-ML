@@ -4,9 +4,9 @@ from app.schemas import PersonalityRequest
 from app.predict import predict_personality
 
 app = FastAPI(
-    title="Introvert-Extrovert Prediction API",
-    description="Predict whether a person is an Introvert or Extrovert using a trained XGBoost model.",
-    version="1.0.0"
+    title="Introvert vs Extrovert Prediction API",
+    description="Machine Learning API built with FastAPI and XGBoost",
+    version="1.0.0",
 )
 
 
@@ -20,8 +20,13 @@ def home():
 @app.post("/predict")
 def predict(request: PersonalityRequest):
 
-    prediction = predict_personality(request)
+    result = predict_personality(request)
 
+    return result
+
+@app.get("/health")
+def health():
     return {
-        "prediction": prediction
+        "status": "healthy",
+        "model": "XGBoost"
     }
